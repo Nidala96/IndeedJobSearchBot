@@ -96,7 +96,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 "arguments[0].scrollIntoView({'block':'center','inline':'center'})",
                                 job_element)
                             job_element.click()
-                            #link_element = job_element.find_element(By.TAG_NAME, 'a')
                             link_element = WebDriverWait(driver, 10).until(lambda x: job_element.find_element(By.TAG_NAME, 'a'))
                             link = link_element.get_attribute('href')
                             informazioni = WebDriverWait(driver, 20).until(lambda x: driver.find_element(By.ID, 'jobsearch-ViewjobPaneWrapper'))
@@ -126,9 +125,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             print("lost post")
                             pass
 
-
-
-
             next_page = WebDriverWait(driver, 10).until(
                                 lambda x: driver.find_element("xpath", '//a[@data-testid="pagination-page-next"]'))
             next_page_url = next_page.get_attribute("href")
@@ -138,7 +134,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 close_button.click()
                 print("trovata finestra pop-up")
             except NoSuchElementException:
-
                 pass
         except NoSuchElementException:
             print("here")

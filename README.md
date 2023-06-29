@@ -7,4 +7,4 @@ To use the bot, you need to install Python 3.x, Selenium, ChromeDriver, the pyth
 # Usage
 - /set_ricerca <job_title>: Set the desired job title.
 - /set_luogo <location>: Set the desired job location.
-- /start: Start the job search and display the found job listings in the Telegram chat.
+- /search: Start the job search and display the found job listings in the Telegram chat.

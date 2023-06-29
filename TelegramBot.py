@@ -1,6 +1,7 @@
 from typing import Final
 import os
 from dotenv import load_dotenv
+from selenium.webdriver.support.wait import WebDriverWait
 
 load_dotenv()
 
@@ -63,84 +64,91 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     driver.refresh()
 
-    selezione_input = driver.find_element(By.ID, 'text-input-what')
+    selezione_input = WebDriverWait(driver, 10).until(lambda x: driver.find_element(By.ID, 'text-input-what'))
 
     selezione_input.send_keys(ricerca)
 
-    sleep(1)
-    selezione_input_where = driver.find_element(By.ID, 'text-input-where')
+
+    selezione_input_where = WebDriverWait(driver, 10).until(lambda x: driver.find_element(By.ID, 'text-input-where'))
 
     selezione_input_where.send_keys(luogo)
 
-    sleep(1)
 
-    bottone_cerca = driver.find_element(By.CLASS_NAME, 'yosegi-InlineWhatWhere-primaryButton')
+    bottone_cerca = WebDriverWait(driver, 10).until(lambda x: driver.find_element(By.CLASS_NAME, 'yosegi-InlineWhatWhere-primaryButton'))
 
     bottone_cerca.click()
     for i in range(1, 6):
         try:
             list_element = driver.find_element(By.ID, 'mosaic-jobResults')
             job_elements = list_element.find_elements(By.CSS_SELECTOR, 'div.job_seen_beacon')
-
+            sleep(1)
 
             for job_element in job_elements:
                  if "remoto" in job_element.text:
-
                     try:
                         try:
                             close_button = driver.find_element(By.CLASS_NAME, 'icl-Modal-close')
                             close_button.click()
                             print("trovata finestra pop-up")
                         except NoSuchElementException:
+                            sleep(1)
+                            driver.execute_script(
+                                "arguments[0].scrollIntoView({'block':'center','inline':'center'})",
+                                job_element)
                             job_element.click()
-                            sleep(1)
-                            link_element = job_element.find_element(By.TAG_NAME, 'a')
+                            #link_element = job_element.find_element(By.TAG_NAME, 'a')
+                            link_element = WebDriverWait(driver, 10).until(lambda x: job_element.find_element(By.TAG_NAME, 'a'))
                             link = link_element.get_attribute('href')
-                            sleep(1)
-                            informazioni = driver.find_element(By.ID, 'jobsearch-ViewjobPaneWrapper')
+                            informazioni = WebDriverWait(driver, 20).until(lambda x: driver.find_element(By.ID, 'jobsearch-ViewjobPaneWrapper'))
                             job_title = driver.find_element(By.CLASS_NAME, 'jobsearch-JobInfoHeader-title')
                             html_link = f'<a href="{link}">{"click here"}</a>'
                             lista_informazioni.append(informazioni.text)
+                            print("NoSuchElement")
                             await update.message.reply_html("Found a job: \n" + job_title.text + "\nLink: " + html_link)
                     except ElementClickInterceptedException:
                         try:
-                            close_button = driver.find_element(By.CLASS_NAME, 'icl-Modal-close')
-                            close_button.click()
-                            print("trovata finestra pop-up")
+                            driver.execute_script(
+                                "arguments[0].scrollIntoView({'block':'center','inline':'center'})",
+                                job_element)
                             job_element.click()
-                            sleep(1)
-                            link_element = job_element.find_element(By.TAG_NAME, 'a')
+                            link_element = WebDriverWait(driver, 10).until(
+                                lambda x: job_element.find_element(By.TAG_NAME, 'a'))
                             link = link_element.get_attribute('href')
-                            sleep(1)
-                            informazioni = driver.find_element(By.ID, 'jobsearch-ViewjobPaneWrapper')
+                            informazioni = WebDriverWait(driver, 10).until(
+                                lambda x: driver.find_element(By.ID, 'jobsearch-ViewjobPaneWrapper'))
                             job_title = driver.find_element(By.CLASS_NAME, 'jobsearch-JobInfoHeader-title')
                             html_link = f'<a href="{link}">{"click here"}</a>'
                             lista_informazioni.append(informazioni.text)
+                            sleep(1)
+                            print("Element Intercepted")
                             await update.message.reply_html("Found a job: \n" + job_title.text + "\nLink: " + html_link)
-                        except NoSuchElementException:
-
+                        except ElementClickInterceptedException:
+                            print("lost post")
                             pass
-            sleep(1)
-            next_page = driver.find_element("xpath", '//a[@data-testid="pagination-page-next"]')
+
+
+
+
+            next_page = WebDriverWait(driver, 10).until(
+                                lambda x: driver.find_element("xpath", '//a[@data-testid="pagination-page-next"]'))
             next_page_url = next_page.get_attribute("href")
             driver.get(next_page_url)
-            sleep(2)
             try:
                 close_button = driver.find_element(By.CLASS_NAME, 'icl-Modal-close')
                 close_button.click()
-            except NoSuchElementException:
                 print("trovata finestra pop-up")
-                pass
-            sleep(1)
-        except NoSuchElementException:
+            except NoSuchElementException:
 
+                pass
+        except NoSuchElementException:
+            print("here")
             pass
     await update.message.reply_text("Scraping completed. Found {} jobs.".format(len(lista_informazioni)))
 
 if __name__ == '__main__':
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start_command))
+    app.add_handler(CommandHandler('search', start_command))
 
     app.add_handler(CommandHandler('set_ricerca', set_ricerca))
 
@@ -152,4 +160,3 @@ if __name__ == '__main__':
     app.run_polling(poll_interval=5)
 
 
-input()
